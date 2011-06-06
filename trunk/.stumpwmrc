@@ -1,8 +1,8 @@
 ;; .stumpwmrc --- my own Stumpwm customizations
-;; Copyright (C) 2008 by S.P.Tseng
-;; Author: S.P.Tseng <deftsp@gmail.com>
+;; Copyright (C) 2008 by Shihpin Tseng
+;; Author: Shihpin Tseng <deftsp@gmail.com>
 ;; License: public domain
-;; When:  Time-stamp: "2008-07-28 11:10:10 S.P.Tseng"
+;; When:  Time-stamp: "2011-06-06 08:30:26 Shihpin Tseng"
 ;; Keywords: local,customization,Stumpwm
 ;; Commentary: Modifies visual appearance of mode-line, input box, X windows; adds numerous key bindings
 ;; and heavily integrates Surfraw shortcuts. Includes some helper/utility functions.
@@ -23,7 +23,7 @@
 ;; (setf *run-or-raise-all-screens* 't)
 ;;; mouse
 ;; The mouse focus policy decides how the mouse affects input focus
-(setf *mouse-focus-policy* :click)
+(setf *mouse-focus-policy* :sloppy) ;; :ignore :sloppy: click
 
 ;;; Window Appearance
 ;; The width in pixels given to the borders of regular windows.
@@ -31,23 +31,26 @@
 ;; The width in pixels given to the borders of windows with maxsize or ratio hints.
 (setf *maxsize-border-width* 0)
 ;; The width in pixels given to the borders of transient or pop-up windows.
-(setf *transient-border-width* 1)
+(setf *transient-border-width* 0)
 
 (defparameter FOREGROUND-COLOR "green")
 (defparameter BACKGROUND-COLOR "black")
 (defparameter BORDER-COLOR "green")
 
 ;; Window border colors.
-(set-focus-color BACKGROUND-COLOR)
-(set-unfocus-color BACKGROUND-COLOR)
-(set-win-bg-color BACKGROUND-COLOR)
+(set-focus-color "DarkSeaGreen")
+(set-unfocus-color "red")
+(set-win-bg-color "black")             ; set to the color of emacs's background
 
-(setf *window-border-style* :thick)     ; :thick :thin :tight :none
+(setf *window-border-style* :thin)      ; :thick :thin :tight :none
+(set-normal-gravity :bottom)
+(set-maxsize-gravity :center)
+(set-transient-gravity :center)
 
 ;; Input box colors
 (set-bg-color BACKGROUND-COLOR)
 (set-fg-color "forestgreen")
-(set-border-color "SteelBlue")
+(set-border-color "grey16")
 (set-msg-border-width 0)
 (setf *input-window-gravity* :bottom-right)
 
@@ -83,9 +86,10 @@
 
 ;; I don't really want to be constantly typing "concatenate 'string" - this simplifies things. Thanks to sabetts of
 ;; #stumpwm
-(defun cat (&rest strings)
-  "Concatenates strings, like the Unix command 'cat'. A shortcut for (concatenate 'string foo bar)."
-  (apply 'concatenate 'string strings))
+;; use concat in primitives.lisp instead.
+;; (defun cat (&rest strings)
+;;   "Concatenates strings, like the Unix command 'cat'. A shortcut for (concatenate 'string foo bar)."
+;;   (apply 'concatenate 'string strings))
 
 
 ;;; find window and to what your whant.
@@ -144,17 +148,17 @@
 ;; todo: use function user-homedir-pathname and merge-pathnames to update it.
 (defun expand-file-name (path &optional default-directory)
   (let ((first-char (subseq path 0 1))
-        (home-dir (cat (getenv "HOME") "/"))
+        (home-dir (concat (getenv "HOME") "/"))
         (dir (if default-directory
                  (if (string= (subseq (reverse default-directory) 0 1) "/")
                      default-directory
-                     (cat default-directory "/")))))
-    (cond ((string= first-char "~") (cat home-dir (subseq path 2)))
+                     (concat default-directory "/")))))
+    (cond ((string= first-char "~") (concat home-dir (subseq path 2)))
           ((string= first-char "/") path)
           (dir (if (string= (subseq dir 0 1) "/")
-                   (cat dir path)
-                   (expand-file-name (cat dir path))))
-          (t (cat home-dir path)))))
+                   (concat dir path)
+                   (expand-file-name (concat dir path))))
+          (t (concat home-dir path)))))
 
 (defun shell-command (command)
   "Run a shell command and display output to screen.
@@ -168,8 +172,8 @@
 ;;   (shell-command command))
 
 (defcommand my-shell-command (command) ((:string "sh$ "))
-            (check-type command string)
-            (shell-command command))
+  (check-type command string)
+  (shell-command command))
 
 ;; (defun load-contrib (file)
 ;;   "Load a file in the contrib directory"
@@ -181,18 +185,19 @@
 
 ;;; Font
 ;; (set-font "-artwiz-snap-normal-*-*-*-*-*-*-*-*-*-iso10646-*")
-;; (set-font "-*-wenquanyi bitmap song-medium-r-normal-*-13-*-*-*-*-*-iso10646-*")
-;; (set-font "-xos4-*-medium-r-normal-*-12-*-*-*-*-*-*-*")
-(set-font "-*-profont-medium-r-normal-*-14-*-*-*-*-*-iso8859-*")
+(set-font "-*-aqui-medium-r-*-*-11-*-*-*-*-*-*-*")
+;; (set-font "-*-wenquanyi bitmap song-medium-r-normal-*-12-*-*-*-*-*-iso10646-*")
+;; (set-font "-xos4-*-medium-r-normal-*-13-*-*-*-*-*-iso10646-*")
+;; (set-font "-*-profont-medium-r-normal-*-14-*-*-*-*-*-iso8859-*")
+;; (set-font "-*-unifont-medium-r-normal-*-14-*-*-*-*-*-iso10646-*")
 ;; (set-font "-*-comic sans ms-medium-r-normal-*-12-*-*-*-*-*-*-*")
 ;; Set the 1337 lisp machine font
-;; (set-font "-lispm-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
-
+;; (set-font "-lispm-fixed-medium-r-normal-*-12-*-*-*-*-*-*-*")
 (defparameter X-TERM "exec urxvt"
   "What shall be the command run when we want an X terminal?")
 
 ;; Text browsers are good, too.
-(defparameter X-TERM-BROWSER (cat X-TERM  " -e w3m")
+(defparameter X-TERM-BROWSER (concat X-TERM  " -e w3m")
   "We will want to open up our chosen CLI web browser in our chosen X terminal. What is it?")
 
 ;; Yay for GUI web browsing!
@@ -226,9 +231,9 @@
 ;; (setf *format-time-string-default* "%a %b %e %k: %M")
 
 ;;; notifications
-(load (expand-file-name "~/src/stumpwm/contrib/notifications.lisp"))
+;; (load (expand-file-name "~/src/stumpwm/contrib/notifications.lisp"))
 
-(define-key *root-map* (kbd "N") '*notifications-map*)
+;; (define-key *root-map* (kbd "N") '*notifications-map*)
 
 ;; (defun notify (fmt args)
 ;;   (let ((*executing-stumpwm-command* nil)
@@ -241,7 +246,7 @@
 
 
 ;;; Modeline
-(setf *mode-line-background-color* BACKGROUND-COLOR
+(setf *mode-line-background-color* "black"
       *mode-line-border-color* BORDER-COLOR
       *mode-line-foreground-color* "forestgreen"
       *mode-line-border-width* 0        ; "How thick shall the mode line border be?"
@@ -251,21 +256,67 @@
       *mode-line-position* :top         ; bottom
       *mode-line-timeout* 10)           ; Update every 10 seconds if nothing else has triggered it already.
 
-;; (setf *group-format* "%s%t")
+;; fixme: read can not get any value but clisp works fine, Is this sbcl's bug?
+;; http://sourceforge.net/mailarchive/message.php?msg_id=4865A852.2010001%40lisphacker.com
+;; (read-from-string
+;;    (trivial-shell:shell-command
+;;       "cat /sys/class/net/eth0/statistics/rx_bytes" ))
+;; (defun network-meter ()
+;;   "return a string of network download and upload"
+;;   (let ((rxb 0)
+;;         (txb 0))
+;;     (with-open-file (in  #P"/sys/class/net/eth0/statistics/rx_bytes" :direction :input)
+;;       (setf rxb (read in)))
+;;     (with-open-file (in (pathname
+;;                          (concatenate 'string "/sys/class/net/" interface "/statistics/tx_bytes")) :direction :input)
+;;       (setf txb (read in)))))
 
 (defun fix-str-length (str length)
   (if (> (length str) length)
-      (cat (subseq str 0 (- length 2)) ".*")
+      (concat (subseq str 0 (- length 2)) ".*")
       (format nil "~va" length str)))
 
-(defun fmt-window-list (ml)
-  "Using *window-format*, return a 1 line list of the windows, space seperated."
-  (fix-str-length (format nil "~{~a~^ ~}"
-                          (mapcar (lambda (w) (format-expand *window-formatters* *window-format* w))
-                                  (sort-windows (mode-line-current-group ml)))) 47))
+;; (defun fmt-window-list (ml)
+;;   "Using *window-format*, return a 1 line list of the windows, space seperated."
+;;   (fix-str-length (format nil "~{~a~^ ~}"
+;;                           (mapcar (lambda (w) (format-expand *window-formatters* *window-format* w))
+;;                                   (sort-windows (mode-line-current-group ml)))) 47))
 
+;;; mpd
+;; (load-module "mpd")
+;; (setf *mpd-modeline-fmt* "%S [%s;%r]: %a - %t (%n/%p)")
+;; (setf *mpd-map*
+;;       (let ((m (make-sparse-keymap)))
+;;         (define-key m (kbd "SPC") "mpd-toggle-pause")
+;;         (define-key m (kbd "s") "mpd-toggle-random")
+;;         (define-key m (kbd "r") "mpd-toggle-repeat")
+;;         (define-key m (kbd "S") "mpd-current-song")
+;;         (define-key m (kbd "P") "mpd-play")
+;;         (define-key m (kbd "q") "mpd-browse-playlist")
+;;         (define-key m (kbd "o") "mpd-stop")
+;;         (define-key m (kbd "n") "mpd-next")
+;;         (define-key m (kbd "p") "mpd-prev")
+;;         (define-key m (kbd "c") "mpd-clear")
+;;         (define-key m (kbd "x") "mpd-connect")
+;;         (define-key m (kbd "k") "mpd-kill")
+;;         (define-key m (kbd "u") "mpd-update")
+;;         (define-key m (kbd "a") "mpd-search-and-add-artist")
+;;         (define-key m (kbd "z") "mpd-playlist")
+;;         (define-key m (kbd "v") "mpd-set-volume")
+;;         (define-key m (kbd "e") "mpd-volume-up")
+;;         (define-key m (kbd "d") "mpd-volume-down")
+;;         (define-key m (kbd "S") '*mpd-search-map*)
+;;         (define-key m (kbd "b") '*mpd-browse-map*)
+;;         (define-key m (kbd "A") '*mpd-add-map*)
+;;         m))
+;; (define-key *top-map* (kbd "s-m") '*mpd-map*)
+
+
+
+(setf *group-format* "%t")
 (setf *window-name-source* :title)
-(setf *window-format* "%m%n%s%50c")
+(setf *window-format* "%m%n%s%10c")
+;; (setf *window-format* "%m%n%s%10t")
 
 (defun check-mail (path)
   (labels ((mail-number-color (nmail)
@@ -281,7 +332,7 @@
   (let ((current-window (current-window)))
     (if current-window
         (window-title current-window)
-        (cat "No Window In ::"
+        (concat "No Window In ::"
              (group-name (current-group)) "::"))))
 
 
@@ -289,7 +340,7 @@
   (if (< length notifications-length)
       (error "length should bigger than notifications-length!"))
   (if notifications
-      (cat (fix-str-length (current-window-tilte) (- length
+      (concat (fix-str-length (current-window-tilte) (- length
                                                      notifications-length
                                                      3))
            " ["
@@ -298,21 +349,34 @@
       (fix-str-length (current-window-tilte) length)))
 
 
-(setf *screen-mode-line-format* (list  "^5*"
-                                       `(:eval (window-tilte-and-notifications-with-fix-length 56 20))
-                                       ;; "%N" ;notifications
-                                       "^n"
-                                       "^6*%w ^n"
-                                       " %c " ; cpu
-                                       `(:eval (check-mail "/home/tsp/Mail/inbox/new/*.*"))
-                                       " ^2*"
-                                       `(:eval (stumpwm::format-time-string "%a %b %e %k:%M %Y"))
-                                       "^n"))
+(setf *screen-mode-line-format* (list " "
+                                      ;; (string #\NewLine)
+                                      ;; " "
+                                      ;; (string #\NewLine)
+                                      ;; `(:eval (stumpwm::format-time-string "%a %b %e %k:%M %Y"))
+                                      ;; " | %c " ; cpu
+                                      ;; "net ↓↑ "
+                                      ;; "^B^2*�|" `(:eval (window-tilte-and-notifications-with-fix-length 56 20)) "^n"
+                                      ;; `(:eval (check-mail "/home/tsp/Mail/inbox/new/*.*"))
+                                      " ^6*(^[^nu ^B^5*%u^])^n"
+                                      " ^6*(^[^ng ^]%g)^n"
+                                      ;; "%N" ;notifications
+                                      " ^6*(^[^nw ^]%w)^n"
+                                      "  ^B^5* %m^n"))
+;;; mode-line hook, add before turn on mode-line
+(defun enable-dzen2-mode-line ()
+  (run-shell-command "enable-ml"))
+
+(defun disable-dzen2-mode-line ()
+  (run-shell-command "disable-ml"))
+
+(and (boundp '*mode-line-enable-hook*) (replace-hook *mode-line-enable-hook* 'enable-dzen2-mode-line))
+(and (boundp '*mode-line-disable-hook*) (replace-hook *mode-line-disable-hook* 'disable-dzen2-mode-line))
+
 
 ;; Switch mode-line on
 (if (not (head-mode-line (current-head)))
     (toggle-mode-line (current-screen) (current-head)))
-
 
 ;; toggle-mode-line-hook
 ;; (defun toggle-mode-line-hook (key key-seq cmd)
@@ -332,89 +396,103 @@
 (replace-hook *mode-line-click-hook* 'mode-line-click-hook)
 
 ;;; to start swank
+(asdf:oos 'asdf:load-op :swank)
 ;; (swank-loader:load-swank)
-;; (asdf:oos 'asdf:load-op 'swank)
-;; (swank:create-server :port 4005  :dont-close t :coding-system "utf-8-unix")
+(swank:create-server :port swank::default-server-port
+                     :style swank:*communication-style*
+                     :coding-system "utf-8-unix"
+                     :dont-close t)
 ;; Then call slime-connect with defaults from GNU Emacs
 ;; added swank connection to stumpwm-command "swank"
-(defcommand swank () ()
-            (setf stumpwm:*top-level-error-action* :break)
-            (and (swank:create-server :port swank::default-server-port
-                                    :style swank:*communication-style*
-                                    :coding-system "utf-8-unix"
-                                    :dont-close t))
-            (echo-string (current-screen) "Starting Swank"))
-
+;; (defcommand swank () ()
+;;   (setf stumpwm:*top-level-error-action* :break)
+;;   (and (swank:create-server :port swank::default-server-port
+;;                             :style swank:*communication-style*
+;;                             :coding-system "utf-8-unix"
+;;                             :dont-close t)
+;;        (echo-string (current-screen) "Starting Swank...Done")))
+;;
 
 ;; Leaving open the option to use Conkeror, a skin over Firefox.
 ;; Wish I could get sane tabbed browsing in it...
 (defcommand conkeror () ()
-            "Start/Switchto Conkeror."
-            (run-or-raise "conkeror" '(:class "Conkeror")))
+  "Start/Switchto Conkeror."
+  (run-or-raise "conkeror" '(:class "Conkeror")))
 
 
 ;;Query ACPI and show the battery's status.
 (defcommand show-battery () ()
-            (echo-string (current-screen) (run-shell-command "acpi" t)))
+  (echo-string (current-screen) (run-shell-command "acpi" t)))
 
 (defcommand show-mldonkey-stats () ()
-            (substitute #\Space #\Newline (run-shell-command "(ps aux c | grep -q 'mlnet') && \\
+  (substitute #\Space #\Newline (run-shell-command "(ps aux c | grep -q) 'mlnet' && \\
  mldonkey_command -p \"\" vd | grep Down: | cut -d'|' -f1,2" t)))
 
 ;;Briefly display a single frame from the top command and bind to a key.
 ;;Inspiration: <http://hocwp.free.fr/temp/stumpwmrc>
 (defcommand run-top () ()
-            (stumpwm::my-shell-command "top -b -n 1 -c -d 1"))
-
-(defcommand emacs () ()
-            "Start emacs unless it is already running, in which case focus it."
-            (run-or-raise "emacs" '(:class "Emacs")))
+  (stumpwm::my-shell-command "top -b -n 1 -c -d 1"))
 
 (defcommand xpdf () ()
-            (run-or-raise "xpdf" '(:class "Xpdf")))
+  (run-or-raise "xpdf" '(:class "Xpdf")))
 
 ;; Binding for Xpdf
 (define-key *root-map* (kbd "x") "xpdf")
 
 (defcommand gmrun () ()
-            (run-shell-command "gmrun"))
+  (run-shell-command "gmrun"))
 
 
 (defcommand stardict () ()
-            (run-or-raise "stardict" '(:class "Stardict")))
+  (run-or-raise "stardict" '(:class "Stardict")))
 
 ;; need to install xautomation
-(defcommand stardict-scan-toggle () ()
-            (stumpwm::find-window-dwim '(:class "Stardict") :all-groups t
-                                       :exec-shell "xte 'keydown Alt_L' 'key s' 'keyup Alt_L'"
-                                       :to-and-back t))
+;; (defcommand stardict-scan-toggle () ()
+;;             (stumpwm::find-window-dwim '(:class "Stardict") :all-groups t
+;;                                        :exec-shell "xte 'keydown Alt_L' 'key s' 'keyup Alt_L'"
+;;                                        :to-and-back t))
+
+(defcommand toggle-stardict-scan nil nil
+  (let ((win (stumpwm::find-window-range '(:class "Stardict") t)))
+    (if win
+        (send-fake-key win (parse-key "M-s"))
+        (and (y-or-n-p "Stardict is not start, stardict now? ")
+             (progn (run-shell-command "stardict")
+                    (message "Now Stardict is Loading!"))))))
+
 
 (defparameter *dictionary-map*
   (let ((m (make-sparse-keymap)))
     (define-key m (kbd "ESC") "abort")
     (define-key m (kbd "d") "stardict")
-    (define-key m (kbd "s") "stardict-scan-toggle")
+    (define-key m (kbd "s") "toggle-stardict-scan")
     m))
 
 (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "d") '*dictionary-map*)
 
 (defcommand toggle-touchpad () ()
-            "Toggle the laptop touchpad on/off.
+  "Toggle the laptop touchpad on/off.
    Need to have set 'Option SHMConfig' for Synaptics Touchpad
    device in xorg.conf."
-            (let ((state (run-shell-command
-                          "synclient -l | grep TouchpadOff | awk '{ print $3 }'" t)))
-              (case (string= (subseq state 0 1) "1")
-                (t (shell-command "synclient TouchpadOff=0"))
-                (otherwise (shell-command "synclient TouchpadOff=1")
-                           (banish-pointer)))))
+  (let ((state (run-shell-command
+                "synclient -l | grep TouchpadOff | awk '{ print $3 }'" t)))
+    (case (string= (subseq state 0 1) "1")
+      (t (shell-command "synclient TouchpadOff=0"))
+      (otherwise (shell-command "synclient TouchpadOff=1")
+                 (banish-pointer)))))
 
 ;; (define-key *root-map* (kbd "T") "toggle-touchpad")
 
 ;; Turn off Touchpad initially
 ;; (shell-command "synclient TouchpadOff=1")
 
-
+(defcommand sxt () ()
+  "Start Xephyr on :2 and move to group \"Xephyr\""
+  (progn
+    (run-commands "gnew Xephyr")
+    (run-shell-command "Xephyr -ac -fullscreen -dpi 100 -br -reset -terminate 2> /dev/null :2 &  " t)
+    ;; (run-shell-command "DISPLAY=:2 sawfish & ")
+    ))
 
 ;; (defun show-prompt ()
 ;;   (format *terminal-io* "~&~A> " (package-name *package*))
@@ -441,13 +519,13 @@
     `button' is which mouse button to use and `iterations' is how many times to click
     (so twice would be a double-click, for example)."
   (loop while (> iterations 0) do
-       (shell-command (cat "xte 'mouseclick " (write-to-string button) "'"))
+       (shell-command (concat "xte 'mouseclick " (write-to-string button) "'"))
        (setq iterations (- iterations 1))))
 
 (defcommand new-ratclick (button iterations) ((:number "Button: ")
                                               (:number "How many times? "))
-            (when (current-window)
-              (stump-send-click button iterations)))
+  (when (current-window)
+    (stump-send-click button iterations)))
 
 ;; I prefer to bind these to a key, since I use a separate keymap for all my mouse control needs. If you provide no
 ;; argument, it will prompt for both. If you provide one, it'll prompt for the second, and if you provide both it'll
@@ -462,29 +540,29 @@
 ;;;;;;;;;;;;;;;;;
 
 (defcommand reinit () ()
-            (run-commands "reload" "loadrc"))
+  (run-commands "reload" "loadrc"))
 ;; (defcommand init () ()
 ;;   (stumpwm::load-rc-file))
 
 (defcommand firefox () ()
-            (run-or-raise "firefox" '(:class "Firefox")))
+  (run-or-raise "firefox" '(:class "Firefox")))
 
 (define-key *root-map* (kbd "j") "firefox")
 
 (defcommand urxvt () ()
-            (run-or-raise "urxvt" '(:class "URxvt")))
+  (run-or-raise "urxvt" '(:class "URxvt")))
 
 (define-key *root-map* (kbd "RET") "urxvt")
 
 (define-key *root-map* (kbd "C-w") "windowlist")
 
 (defcommand dmenu () ()
-            (run-shell-command "dmenu_run"))
+  (run-shell-command "dmenu_run"))
 (define-key *root-map* (kbd "P") "dmenu")
 
 
 (defcommand image-viewer () ()
-            (run-or-raise X-IMAGE-VIEWER '(:class "Image-viewer")))
+  (run-or-raise X-IMAGE-VIEWER '(:class "Image-viewer")))
 
 ;; Automatically dump a core file when we quit. .xinitrc will try to exec ~/bin/sbcl-stumpwm-core
 ;; (define-stumpwm-command "quit" ()
@@ -493,55 +571,55 @@
 ;;; Pasting
 ;;Loads in some functions to allow multiple registers (think Emacs-style). Binds to numerical keys.
 ;;See <http://stumpwm.elektrubadur.se/cgi-bin/wiki/paste.lisp>
-;; (load (expand-file-name "~/.stumpwm.d/paste.lisp"))
+;; (load (expand-file-name "~/.stumpwm.d/packages/paste.lisp"))
 
 ;; (defcommand insert-X-selection () ()
 ;;             (window-send-string (current-window) (get-x-selection)))
 
 (defcommand write-selection nil nil
-            (run-shell-command "xsel -o"))
+  (run-shell-command "xsel -o"))
 (define-key *top-map* (kbd "s-y") "write-selection")
 
 ;;; about selection
 
 (define-key *root-map* (kbd "M-s") "getsel")
 
+
 ;;; bookmarks
-(load (expand-file-name "~/.stumpwm.d/bookmarks.lisp"))
-(define-key *root-map* (kbd "b") '*bookmarks-map*)
+;; (load (expand-file-name "~/.stumpwm.d/packages/bookmarks.lisp"))
+;; (define-key *root-map* (kbd "b") '*bookmarks-map*)
 
 ;;; cpu
-(load-module "cpu")
-(setq *cpu-usage-bar-width* 12)
+;; (load-module "cpu")
+;; (setq *cpu-usage-bar-width* 12)
 
-(defun fmt-cpu-usage (ml)
-  "Returns a string representing current the percent of average CPU
-  utilization."
-  (declare (ignore ml))
-  (let ((cpu (truncate (* 100 (current-cpu-usage)))))
-    (format nil "CPU:^[~A~3D%^] " (bar-zone-color cpu) cpu)))
-;;; cl-keynav
-;; (load (expand-file-name "~/.stumpwm.d/cl-keynav.lisp"))
-
+;; (defun fmt-cpu-usage (ml)
+;;   "Returns a string representing current the percent of average CPU
+;;   utilization."
+;;   (declare (ignore ml))
+;;   (let ((cpu (truncate (* 100 (current-cpu-usage)))))
+;;     (format nil "CPU:^[~A~3D%^] " (bar-zone-color cpu) cpu)))
+;;; keynav
+;; (load (expand-file-name "~/.stumpwm.d/packages/keynav.lisp"))
 
 ;;; surfraw
-(load-module "surfraw")
-(setf *surfraw-bookmark-file* (expand-file-name "~/.surfraw.bookmarks"))
+;; (load-module "surfraw")
+;; (setf *surfraw-bookmark-file* (expand-file-name "~/.surfraw.bookmarks"))
 
-(defparameter *surfraw-map*
-  (let ((m (make-sparse-keymap)))
-    (define-key m (kbd "t") "surfraw")
-    (define-key m (kbd "ESC") "abort")
-    (define-key m (kbd "g") "google")
-    (define-key m (kbd "G") "google-selection")
-    (define-key m (kbd "b") "sr-bookmark")
-    (define-key m (kbd "B") "sr-bookmark-file-display")
-    (define-key m (kbd "y") "wayback")
-    (define-key m (kbd "Y") "wayback-selection")
-    (define-key m (kbd "w") "wikipedia")
-    (define-key m (kbd "W") "wikipedia-selection")
-    m))
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "t") '*surfraw-map*)
+;; (defparameter *surfraw-map*
+;;   (let ((m (make-sparse-keymap)))
+;;     (define-key m (kbd "t") "surfraw")
+;;     (define-key m (kbd "ESC") "abort")
+;;     (define-key m (kbd "g") "google")
+;;     (define-key m (kbd "G") "google-selection")
+;;     (define-key m (kbd "b") "sr-bookmark")
+;;     (define-key m (kbd "B") "sr-bookmark-file-display")
+;;     (define-key m (kbd "y") "wayback")
+;;     (define-key m (kbd "Y") "wayback-selection")
+;;     (define-key m (kbd "w") "wikipedia")
+;;     (define-key m (kbd "W") "wikipedia-selection")
+;;     m))
+;; (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "t") '*surfraw-map*)
 
 
 
@@ -565,7 +643,7 @@
   ;; (run-with-timer 5 5 'banish-pointer)
   ;; Change the background and pointer in X
   (run-shell-command "xsetroot -cursor_name left_ptr -gray -fg black -bg white -name root-window")
-  (run-shell-command "feh --bg-scale /home/tsp/.wmii-3.5/wallpaper/wmii.jpg")
+  ;; (run-shell-command "feh --bg-scale /home/tsp/.wmii-3.5/wallpaper/wmii.jpg")
   ;; (run-shell-command "xsetbg /home/enigma/media/pictures/artwork/vintage_wallpaper_blue.png")
   (run-shell-command "(ps aux c | grep -q 'urxvt') || urxvt")
   ;; (run-shell-command "(ps aux c | grep -q 'have-a-rest') || have-a-rest")
@@ -592,15 +670,18 @@
 ;; ----------------------------------------------------------------------------------------------------
 ;;; Make the bindings more comfortable.
 
-;;Set the *prefix-key*. The main feature of note is the changing of the escape sequence from 2 keys, C-t, to a single
-;;key, and the mirroring of less with another key, so there are actually 2 equivalent escape keys.
+;; Set the *prefix-key*. The main feature of note is the changing of the escape sequence from 2 keys, C-t, to a single
+;; key, and the mirroring of less with another key, so there are actually 2 equivalent escape keys.
 
+;; Note that you can send C-i to application like Emacs by typing C-i i.
 (set-prefix-key (kbd "C-i"))
 
 ;; When not in Stumpwm mode, we want Insert to be bound to enter Stumpwm mode
 (define-key *top-map* (kbd "Insert") '*root-map*)
 (define-key *root-map* (kbd "Insert") "next") ;;When in Stumpwm mode, act like hitting the prefix again would.
 
+(define-key *root-map* (kbd "C-RET") "fullscreen")
+(define-key *top-map* (kbd "C-RET") nil)
 ;; top map
 (define-key *top-map* (kbd "H-Tab") "other") ; C-i C-i seems more convenient
 (define-key *top-map* (kbd "H-S-ISO_Left_Tab") "prev")
@@ -618,7 +699,7 @@
 (defparameter *emms-map*
   (let ((m (make-sparse-keymap)))
     (map nil #'(lambda (x)
-               (define-key m (kbd (car x)) (cdr x)))
+                 (define-key m (kbd (car x)) (cdr x)))
          *emms-bindings*)
     m))
 (define-key *root-map* (kbd "e") '*emms-map*)
@@ -628,31 +709,31 @@
 (define-key *top-map* (kbd "s-SPC") "emms-pause")
 
 (defcommand emms-next () ()
-            (stumpwm::find-window-dwim '(:class "Emacs")
-                                       :all-groups t
-                                       :all-screens t
-                                       :exec-shell "emacsclient.emacs22 -e '(emms-next)'"
-                                       :do-func '(message "Emms: Next song.")))
+  (stumpwm::find-window-dwim '(:class "Emacs")
+                             :all-groups t
+                             :all-screens t
+                             :exec-shell "emacsclient -e '(emms-next)'"
+                             :do-func '(message "Emms: Next song.")))
 
 (defcommand emms-previous () ()
-            (stumpwm::find-window-dwim '(:class "Emacs")
-                                       :all-groups t
-                                       :all-screens t
-                                       :exec-shell "emacsclient.emacs22 -e '(emms-previous)'"
-                                       :do-func '(message "Emms: previous song.")))
+  (stumpwm::find-window-dwim '(:class "Emacs")
+                             :all-groups t
+                             :all-screens t
+                             :exec-shell "emacsclient -e '(emms-previous)'"
+                             :do-func '(message "Emms: previous song.")))
 
 (defcommand emms-pause () ()
-            (stumpwm::find-window-dwim '(:class "Emacs")
-                                       :all-groups t
-                                       :all-screens t
-                                       :exec-shell "emacsclient.emacs22 -e '(emms-pause)'"
-                                       :do-func '(message "Emms: Pause.")))
+  (stumpwm::find-window-dwim '(:class "Emacs")
+                             :all-groups t
+                             :all-screens t
+                             :exec-shell "emacsclient -e '(emms-pause)'"
+                             :do-func '(message "Emms: Pause.")))
 
 ;;; Screenshot
 ;;Make prtscreen work, as long as in command mode. "import" is an Imagemagick command.
 (define-key *top-map* (kbd "Print") "exec import -window root png:$HOME/xwd-$(date +%s)$$.png")
 (defcommand part-screenshot () ()
-            (run-shell-command "scrot -s"))
+  (run-shell-command "scrot -s"))
 (define-key *top-map* (kbd "M-Print") "part-screenshot")
 
 
@@ -672,16 +753,16 @@
 (define-key *root-map* (kbd "!") "my-shell-command")
 
 ;; ;;Browse somewhere with the GUI WWW browser.
-;; (define-key *root-map* (kbd "b") (cat "colon " X-WWW-BROWSER " http://www."))
+;; (define-key *root-map* (kbd "b") (concat "colon " X-WWW-BROWSER " http://www."))
 (define-key *root-map* (kbd "B") "open-selection-browser")
 
 ;;SSH somewhere in the default terminal.
-(define-key *root-map* (kbd "C-s") (cat "colon " X-TERM " -e ssh "))
+(define-key *root-map* (kbd "C-s") (concat "colon " X-TERM " -e ssh "))
 
 ;;More SSH.
-(define-key *root-map* (kbd "X") (cat X-TERM "-e ssh -X root@127.0.0.1 urxvt"))
+(define-key *root-map* (kbd "X") (concat X-TERM "-e ssh -X root@127.0.0.1 urxvt"))
 
-(define-key *root-map* (kbd "C") (cat "colon " X-TERM " -e "))
+(define-key *root-map* (kbd "C") (concat "colon " X-TERM " -e "))
 (define-key *root-map* (kbd "C-j") "emacs")
 
 
@@ -689,7 +770,7 @@
 (define-key *root-map* (kbd "W") X-TERM-BROWSER)
 
 ;;Shortcut for Nano
-(define-key *root-map* (kbd "M-E") (cat "colon " X-TERM " -e nano"))
+(define-key *root-map* (kbd "M-E") (concat "colon " X-TERM " -e nano"))
 
 ;; Image viewer
 (define-key *root-map* (kbd "v") "image-viewer") ;;"image-viewer" is defined in functions.
@@ -702,7 +783,7 @@
 ;; Web browsing commands
 ;; Get the X selection and order the GUI browser to open it. Presumably it is a HTTP address.
 (defcommand open-selection-browser () ()
-            (run-shell-command (cat X-WWW-BROWSER (get-x-selection))))
+  (run-shell-command (concat X-WWW-BROWSER (get-x-selection))))
 
 ;;; Web jump (works for Google and Imdb)
 ;; (defmacro make-web-jump (name prefix)
@@ -727,40 +808,6 @@
 (replace-hook *key-press-hook* 'key-press-hook)
 
 
-;;; Group
-;; Change various group things.
-
-;; Two quick and easy shortcuts - one to switch rapidly between groups and another to list them.
-;; Anything more elaborate can be done by going through group-mode.
-(define-key *root-map* (kbd "~") "vgroups")
-(define-key *root-map* (kbd "quoteleft") "gprev")
-
-
-;; fixme: the value NIL is not type of STUMPWM:WINDOW
-(defun gmove-window (window)
-  "Move application to special group"
-  (dolist (pair '(("URxvt" "Hacking")
-                  ("Emacs" "Hacking")
-                  ("Firefox" "Hacking")
-                  ("Xpdf" "Hacking")
-                  ("MPlayer" "Hacking")
-                  ("Opera" "Hacking")
-                  ("Eva" "Eva")
-                  ("Stardict" "Default")))
-    (if (string= (window-class window) (car pair))
-        (let ((to-group (find-group (current-screen) (cadr pair))))
-          (if to-group
-              (progn (move-window-to-group window to-group)
-                     (return-from gmove-window)))))))
-(replace-hook *new-window-hook* 'gmove-window)
-
-;; Call our first group Term, since that's what I usually use in it.
-(setf (group-name (first (screen-groups (current-screen)))) "Default")
-;;Automatically open up some virtual desktop;
-(stumpwm::run-commands "gnewbg Default"
-                       "gnewbg Hacking"
-                       "gnewbg Eva"
-                       "gselect Hacking")
 
 
 ;; Fluxbox-style Alt-F# virtual desktop (group in StumpWM-speak) switching. Modified from:
@@ -769,91 +816,96 @@
 ;;   (unless (eq i 0)                      ; F0 is non-existant and will error.
 ;;     (define-key *top-map* (kbd (format nil "M-F~a" i)) (format nil "gselect ~a" i))))
 
-;; Trash group
-
-;; A couple of functions for "banishing" the current window in a ".trash" group. Since this group is hidden, you can't
-;; switch to it with gnext/gprev and it won't appear in vgroups and such (unless *list-hidden-groups* is set). You can
-;; show the content of the trash with "trash-show". The group is automatically removed when its last window is destroyed
-;; (and recreated on demand).
-
-;; (defvar *trash-group* '()
-;;   "Group containing the trashed windows")
-
-;; (defun clean-trash (w)
-;;   "Called when a window is destroyed. If it was the last window of the
-;; trash group, destroy it"
-;;   (let ((current-group (window-group w)))
-;;     (when *trash-group*
-;;       (when (and (eq current-group *trash-group*)
-;;       (not (group-windows current-group)))
-;;  (if (eq (current-group) *trash-group*)
-;;      (let ((to-group (second (screen-groups (current-screen)))))
-;;        (switch-to-group to-group)
-;;        (kill-group *trash-group* to-group))
-;;      (kill-group *trash-group* (current-group)))
-;;  (setf *trash-group* nil)
-;;  (message "The trash is empty")))))
-
-
-;; (define-stumpwm-command "trash-window" ()
-;;   "Put the current window in the trash group. If it doesn't exist,
-;; create it"
-;;   (unless (or (eq (current-group) *trash-group*)
-;;        (not (current-window)))
-;;     (unless *trash-group*
-;;       (setf *trash-group* (add-group (current-screen) ".trash")))
-;;     (move-window-to-group (current-window) *trash-group*)))
-
-;; (define-stumpwm-command "trash-show" ()
-;;   "Switch to the trash group if it exists, call again to return to
-;; the previous group"
-;;   (if *trash-group*
-;;       (if (eq (current-group) *trash-group*)
-;;    (switch-to-group (second (screen-groups (current-screen))))
-;;    (switch-to-group *trash-group*))
-;;       (message "The trash is empty!")))
-
-
-;; (add-hook *destroy-window-hook* #'clean-trash)
-
-;; sample bindings
-;; (define-key *root-map* (kbd "_") "trash-window")
-;; (define-key *root-map* (kbd "M-SPC") "trash-show")
 
 ;;----------------------------------------------------------------------------------------------------
 ;;; These functions let me use a different keymap for a given amount of seconds.
 ;;----------------------------------------------------------------------------------------------------
-(defvar *th-top-map* *top-map*
-  "A backup of the *top-map* when stumpwm started.")
 
 ;; #+sbcl
-(defparameter th-temporary-top-map-timer
-  (sb-ext:make-timer (lambda () (th-back-to-top-map)))
-  "The timer for the temporary *top-map*")
+;; (defparameter *temporary-top-map-timer*
+;;   (sb-ext:make-timer #'back-to-top-map :name "temporary-top-map-timer")
+;;   "The timer for the temporary *top-map*")
 
 ;; #+sbcl
-(defun th-use-temporary-top-map (keymap seconds)
-  (when (sb-ext:timer-scheduled-p th-temporary-top-map-timer)
-    (sb-ext:unschedule-timer th-temporary-top-map-timer))
-  (th-push-top-map keymap)
-  (sb-ext:schedule-timer th-temporary-top-map-timer 2))
+;; (defun use-temporary-top-map (keymap seconds)
+;;   (when (sb-ext:timer-scheduled-p *temporary-top-map-timer*)
+;;     (sb-ext:unschedule-timer *temporary-top-map-timer*))
+;;   (unless *top-map-list*
+;;     (push-top-map keymap))
+;;   (sb-ext:schedule-timer *temporary-top-map-timer* seconds))
 
-(defun th-push-top-map (keymap)
-  (when (not (eq *top-map* keymap))
-    (push-top-map keymap)))
+;;; use stumpwm's timer system
 
-(defun th-back-to-top-map ()
-  (when *top-map-list*
-    (setf *top-map* *th-top-map*
-          *top-map-list* nil)
-    (sync-keys))
-  (message "return to *top-map*"))
+;; (defvar *temporary-top-map-timer* nil
+;;   "The timer that return to top-map")
 
+;; (defun return-to-top-map ()
+;;   (pop-top-map)
+;;   (when (timer-p *temporary-top-map-timer*)
+;;     (cancel-timer *temporary-top-map-timer*)
+;;     (setf *temporary-top-map-timer* nil))
+;;   (message  "^B^5*Return to^n ^B^6**top-map*^n ^B^5*:)^n"))
+
+;; (defun use-temporary-top-map (keymap seconds)
+;;   (when (timer-p *temporary-top-map-timer*)
+;;     (cancel-timer *temporary-top-map-timer*))
+;;   (unless *top-map-list*
+;;     (push-top-map keymap))
+;;   (setf *temporary-top-map-timer* (run-with-timer seconds nil 'return-to-top-map)))
 
 ;; -------------------------------------------------------------------------------------------------------------------------
 ;;; volume control
-(load (expand-file-name "~/.stumpwm.d/vc.lisp"))
+;; (load (expand-file-name "~/.stumpwm.d/site-lisp/50vc.lisp"))
 
+;; With that I can increase the volume for 5 steps by typing Pause a + + + + +. Pause is my prefix key, a activates
+;; *alsa-map* and + increases the volume. Two seconds after the last command of *alsa-map* the default koymap will be
+;; restored.
+
+;; (defparameter *amixer-map*
+;;   (let ((m (make-sparse-keymap)))
+;;     (define-key m (kbd "ESC") "abort")
+;;     (define-key m (kbd "C-i") "abort")
+;;     (define-key m (kbd "C-g") "abort")
+;;     (define-key m (kbd "C-h") "help-amixer-map")
+;;     (define-key m (kbd "j")   "amixer-PCM-1+")
+;;     (define-key m (kbd "k")   "amixer-PCM-1-")
+;;     (define-key m (kbd "SPC")  "amixer-PCM-toggle")
+;;     (define-key m (kbd "u")   "amixer-Master-1+")
+;;     (define-key m (kbd "i")   "amixer-Master-1-")
+;;     (define-key m (kbd ",")   "amixer-Headphone-1-")
+;;     (define-key m (kbd ".")   "amixer-Headphone-1+")
+;;     (define-key m (kbd "t")   "amixer-Headphone-toggle")
+;;     (define-key m (kbd "s")   "amixer-sense-toggle")
+;;     m))
+
+;; (defcommand volume-control () ()
+;;   (message-no-timeout "Volume Control")
+;;   (push-top-map *amixer-map*))
+
+;; (defmacro defhelp (command kmap-var)
+;;   `(defcommand ,command () ()
+;;      (display-keybinding ',kmap-var)))
+;; (defhelp help-amixer-map *amixer-map*)
+;; (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "v") "volume-control")
+
+;; (load-module "amixer")
+
+;; (define-key *top-map* (kbd "s-k")   "amixer-PCM-1-")
+;; (define-key *top-map* (kbd "s-j")   "amixer-PCM-1+")
+;; (define-key *top-map* (kbd "s-y")   "amixer-PCM-toggle")
+
+;; (define-key *top-map* (kbd "s-i")   "amixer-Master-1-")
+;; (define-key *top-map* (kbd "s-u")   "amixer-Master-1+")
+;; (define-key *top-map* (kbd "s-o")   "amixer-Master-toggle")
+
+;; (define-key *top-map* (kbd "s-.")   "amixer-Headphone-1-")
+;; (define-key *top-map* (kbd "s-,")   "amixer-Headphone-1+")
+;; (define-key *top-map* (kbd "s-;")   "amixer-Headphone-toggle")
+
+;; (define-key *top-map* (kbd "s-'")   "amixer-sense-toggle")
+
+;; (load-module "aumix")
+;; volume control end there-------------------------------------------------------
 
 ;;; window operate
 (defparameter *window-operate-map*
@@ -873,23 +925,21 @@
     m))
 
 (define-key *root-map* (kbd "w") '*window-operate-map*)
-
-
 ;; ----------------------------------------------------------------------------------------------------
 ;;; Here there is a small starting applications menu.
 
 (defcommand mymenu () ()
-            (labels ((pick (options)
-                       (let ((selection (stumpwm::select-from-menu (current-screen) options "")))
-                         (cond
-                           ((null selection)
-                            (throw 'stumpwm::error "Abort."))
-                           ((stringp (second selection))
-                            (second selection))
-                           (t
-                            (pick (cdr selection)))))))
-              (let ((choice (pick *app-menu*)))
-                (run-shell-command choice))))
+  (labels ((pick (options)
+             (let ((selection (stumpwm::select-from-menu (current-screen) options "")))
+               (cond
+                 ((null selection)
+                  (throw 'stumpwm::error "Abort."))
+                 ((stringp (second selection))
+                  (second selection))
+                 (t
+                  (pick (cdr selection)))))))
+    (let ((choice (pick *app-menu*)))
+      (run-shell-command choice))))
 
 (defparameter *app-menu* '(("BookShelf"
                             ;;submenu
@@ -923,18 +973,18 @@
 
 ;; This command runs the stumpwm "quit" command, but only if there aren't any windows open.
 (defcommand safequit () ()
-            "Checks if any windows are open before quitting."
-            (let ((win-count 0))
+  "Checks if any windows are open before quitting."
+  (let ((win-count 0))
 
-              ;; Count the windows in each group
-              (dolist (group (screen-groups (current-screen)))
-                (setq win-count (+ (length (group-windows group)) win-count)))
+    ;; Count the windows in each group
+    (dolist (group (screen-groups (current-screen)))
+      (setq win-count (+ (length (group-windows group)) win-count)))
 
-              ;; Display the number of open windows or quit
-              (if (= win-count 0)
-                  (run-commands "quit")
-                  (message (format nil "You have ~d ~a open" win-count
-                                   (if (= win-count 1) "window" "windows"))))))
+    ;; Display the number of open windows or quit
+    (if (= win-count 0)
+        (run-commands "quit")
+        (message (format nil "You have ~d ~a open" win-count
+                         (if (= win-count 1) "window" "windows"))))))
 
 
 
@@ -961,11 +1011,6 @@
 ;;----------------------------------------------------------------------------------------------------
 ;;; make some souds for special events
 
-;; this will show the curent group name when you will switch the group
-(defun focus-group (newg oldg)
-  (declare (ignore oldg))
-  (message ":: ~a ::" (group-name newg)))
-
 ;; (defun place-window-sound (w g f)
 ;;   (declare (ignore w f))
 ;;   (unless (eq (current-group) g)
@@ -977,6 +1022,11 @@
 ;; (defun destroy-window-sound (w)
 ;;   (interactive-command "exec aplay /usr/share/sounds/KDE_Dialog_Disappear.wav"))
 
+;; this will show the curent group name when you will switch the group
+(defun focus-group (newg oldg)
+  (declare (ignore oldg))
+  (message ":: ~a ::" (group-name newg)))
+
 (replace-hook *focus-group-hook* 'focus-group)
 ;; (replace-hook *new-window-hook* 'new-window-sound)
 ;; (replace-hook *destroy-window-hook* 'destroy-window-sound)
@@ -984,7 +1034,7 @@
 
 ;; (add-hook *focus-frame-hook* 'frame-hook)
 
-
+(load (expand-file-name "~/.stumpwm.d/site-lisp/50group.lisp"))
 ;;; Define window placement policy...
 ;; Clear rules
 (clear-window-placement-rules)
@@ -994,369 +1044,95 @@
 ;; This macro defines a Stumpwm command for creating a new group, loading the layout, loading the rules, and starting
 ;; the program.
 
+;; (frame-number raise lock &key create restore dump-name class instance type role title)
+;; (define-frame-preference "eva"
+;;       (1 t t   :class "Eva" :instance "eva" :title nil :role "EvaMainUIBase")
+;;     )
+
+
 ;; courtesy of Peter Seibel
 (defmacro with-gensyms ((&rest names) &body body)
   `(let ,(loop for n in names collect `(,n (gensym)))
      ,@body))
 
-(defmacro program-with-layout (name &key (command (string-downcase (string name)))
-                               (props `'(:class ,(string-capitalize command))))
-  (with-gensyms (s w h files-path layout rules)
-    `(defcommand ,name () ()
-                 (let* ((gname (string-capitalize ,command))
-                        (n-group-windows (if (find-group (current-screen) gname)
-                                             (length (group-windows (find-group (current-screen) gname))))))
-                   (cond ((or (null n-group-windows)
-                             (= 0 n-group-windows)) (let* ((,s (current-screen))
-                                                           (,w (prin1-to-string (screen-width ,s)))
-                                                           (,h (prin1-to-string (screen-height ,s)))
-                                                           (,files-path (expand-file-name "~/.stumpwm.d/"))
-                                                           (,layout (concat ,files-path ,command "-layout-" ,w "x" ,h))
-                                                           (,rules (concat ,files-path ,command "-rules")))
-                             (gnew gname)
-                             (restore-from-file ,layout)
-                             (restore-window-placement-rules ,rules)
-                             (run-or-raise ,command ,props)
-                             (place-existing-windows))) ; needed if command was already run
-                         (t (run-or-raise ,command ,props)))))))
-
-(program-with-layout gimp)
-
-;; I keep my layout and rules in ~/stumpwm.d/. The rules file is named "gimp-rules" and the layout is named depending on
-;; screen resolution (e.g., "gimp-layout-1024x768"). The layout loaded will depend on your screen's resolution when you
-;; call the newly-defined gimp command.
-
-;; You can call the command like any other regular Stumpwm command. Use "C-t ; gimp" or bind it to a key with
-;; (define-key *root-map* (kbd "G") "gimp").
-
-(program-with-layout eva)
-(define-key *root-map* (kbd "c") "eva")
-
-;;----------------------------------------------------------------------------------------------------
-;;; No pop-ups
-;; Some applications can take a few seconds to load and then pop up suddenly while you are typing away. However dialog
-;; boxes in the current application should appear. Put this code in your stumpwmrc to fix things.
+;; Last rule to match takes precedence!
+(define-frame-preference "car"
+ (0 nil t :restore   "car-dump" :class "Stardict"))
 
 
-;; (defun window-should-seize-focus (window)
-;;   (equalp (xlib:get-wm-class (window-xwin window)) "urxvt"))
+(define-frame-preference "cadr"
+ (0 t t :create   "cadr-dump" :class "URxvt")
+ (0 t t :create   "cadr-dump" :class "Emacs")
+ (0 t t :create   "cadr-dump" :class "Xpdf"))
 
-;; (defun window-in-current-wmgroup (window)
-;;   (equalp (window-wmgroup window)
-;;           (window-wmgroup (frame-window (window-frame window)))))
+(define-frame-preference "pidgin"
+  (2 t t :create   "pidgin-dump"  :class "Pidgin" :instance "pidgin" :title nil :role nil)
+  (0 t t :create   "pidgin-dump"  :class "Pidgin" :instance "pidgin" :title nil :role "conversation")
+  (1 t t :create   "pidgin-dump"  :class "Pidgin" :instance "pidgin" :title nil :role "buddy_list"))
 
-;; (defun window-wmgroup (window)
-;;   (or (ignore-errors (xlib:wm-hints-window-group (xlib:wm-hints (window-xwin window))))
-;;      (gensym)))
+(define-frame-preference "gimp"
+  (1 t t :create   "gimp-dump"  :class "Gimp" :title nil :role nil)
+  (0 t t :create   "gimp-dump"  :class "Gimp" :title nil :role "gimp-toolbox")
+  (2 t t :create   "gimp-dump"  :class "Gimp" :title nil :role "gimp-dock")
+  (1 t t :create   "gimp-dump"  :class "Gimp" :title nil :role "gimp-image-window"))
 
-;; (defgeneric deny-window-request (window deny-list))
+(defparameter *chat-map*
+  (let ((m (make-sparse-keymap)))
+    (define-key m (kbd "e") "eva")
+    (define-key m (kbd "q") "qq")
+    ;; (define-key m (kbd "f") "fetion")
+    m))
 
-;; (defun deny-request-p (window deny-list)
-;;   (deny-window-request window deny-list))
-
-;; (defmethod deny-window-request (window (deny-list (eql t)))
-;;   t)
-
-;; (defmethod deny-window-request (window (deny-list sequence))
-;;   (find-if 'deny-window-request deny-list))
-
-;; (defmethod deny-window-request (window deny-list)
-;;   (match-res-or-type window deny-list))
-
-;; (defmethod deny-window-request (window (deny-list function))
-;;   (funcall deny-list window))
-
-
-;; (setf *deny-raise-request* nil)
-;; (setf *deny-map-request*
-;;       (lambda(window) (not
-;;                   (or (window-in-current-wmgroup window)
-;;                      (window-should-seize-focus window)))))
-
-;; (setf *deny-raise-request* *deny-map-request*)
-;; No pop-ups ends there----------------------------------------------------------------------------------------
-
-;; (defvar *maximized-frame-size* (make-frame :x 0 :y 0 :width 1024 :height 600))
-;; For a dual screen.
-;; (defvar *maximized-frame-size* (make-frame :number -1 :x 1024 :y 0 :width 1024 :height 768))
-;; (defvar *maximized-frame-size* (make-frame :number -1 :x 0 :y 0 :width 1024 :height 768))
-;; (defvar *current-frame-size* (make-frame :number -1 :x 0 :y 0 :width 0 :height 0))
-;; (defvar *current-maximized-frame* nil)
-
-
-
-;; (defun maximize-frame (screen frame)
-;;   (when *current-maximized-frame*
-;;     (minimize-frame screen))
-;;   (setf (frame-x *current-frame-size*) (frame-x frame)
-;;         (frame-y *current-frame-size*) (frame-y frame)
-;;         (frame-width *current-frame-size*) (frame-width frame)
-;;         (frame-height *current-frame-size*) (frame-height frame))
-;;   (setf *current-maximized-frame* frame)
-;;   (setf (frame-x frame) (frame-x *maximized-frame-size*)
-;;         (frame-y frame) (frame-y *maximized-frame-size*)
-;;         (frame-width frame) (frame-width *maximized-frame-size*)
-;;         (frame-height frame) (frame-height *maximized-frame-size*))
-;;   (sync-frame-windows screen frame)
-;;   (dolist (win (screen-mapped-windows screen))
-;;     (hide-window win))
-;;   (focus-frame screen frame))
-
-
-
-;; (defun minimize-frame (screen)
-;;   (when *current-maximized-frame*
-;;     (setf (frame-x *current-maximized-frame*) (frame-x *current-frame-size*)
-;;           (frame-y *current-maximized-frame*) (frame-y *current-frame-size*)
-;;           (frame-width *current-maximized-frame*) (frame-width *current-frame-size*)
-;;           (frame-height *current-maximized-frame*) (frame-height *current-frame-size*))
-;;     (sync-frame-windows screen *current-maximized-frame*)
-;;     (setf *current-maximized-frame* nil)
-;;     (dolist (frame (screen-frames screen))
-;;       (when (frame-window frame)
-;;         (unhide-window (frame-window frame))))
-;;     (focus-frame screen (screen-current-frame screen))))
-
-;; (defun toggle-minmax-frame (screen frame)
-;;   (if *current-maximized-frame*
-;;       (minimize-frame screen)
-;;       (maximize-frame screen frame)))
-
-
-
-;; (define-stumpwm-command "max" (screen)
-;;   (maximize-frame screen (screen-current-frame screen)))
-
-;; (define-stumpwm-command "min" (screen)
-;;   (minimize-frame screen))
-
-;; (define-stumpwm-command "toggle" (screen)
-;;   (toggle-minmax-frame screen (screen-current-frame screen)))
-
-;; (define-stumpwm-command "bdb" (screen)
-;;   (setf (xlib:window-border (xlib:input-focus *display*))
-;;         (xlib:screen-black-pixel (screen-number screen))))
-
-;; (define-stumpwm-command "bdw" (screen)
-;;   (setf (xlib:window-border (xlib:input-focus *display*))
-;;         (xlib:screen-white-pixel (screen-number screen))))
-
-
-;; (define-stumpwm-command "ce" (screen)
-;;   (setup-win-gravity screen (frame-window (screen-current-frame screen)) :center))
-
-;;; "Tile two windows horizontally."
-;; (define-stumpwm-command "vt" (screen (win1 :number "Pull: ") (win2 :number "Pull: "))
-;;   (pull-window-by-number screen win1) ; pull the first window
-;;   (horiz-split-frame screen)           ; split the current frame
-;;   (focus-frame-sibling screen)        ; get the sibling, and pull the second window
-;;   (pull-window-by-number screen win2))
-
-
-;; ;;; "Tile two windows vertically."
-;; (define-stumpwm-command "vt" (screen (win1 :number "Pull: ") (win2 :number "Pull: "))
-;;   (pull-window-by-number screen win1) ; pull the first window
-;;   (vert-split-frame screen)           ; split the current frame
-;;   (focus-frame-sibling screen)        ; get the sibling, and pull the second window
-;;   (pull-window-by-number screen win2))
-
-
-;; ;;; Exchange two windows in there frames.
-;; (define-stumpwm-command "ex" (screen (win1 :number "Pull: ") (win2 :number "Pull: "))
-;;   (pull-window-by-number screen win1)
-;;   (focus-frame-sibling screen)
-;;   (pull-window-by-number screen win2)
-;;   (focus-frame-sibling screen))
-
-;; (define-stumpwm-command "exchange1" (screen)
-;;   (let ((n1 (window-number (frame-window (screen-current-frame screen)))))
-;;     (focus-frame-sibling screen)
-;;     (let ((n2 (window-number (frame-window (screen-current-frame screen)))))
-;;       (pull-window-by-number screen n1)
-;;       (focus-frame-sibling screen)
-;;       (pull-window-by-number screen n2))))
-
-;; ;;(define-stumpwm-command "exchange" (screen)
-;; ;;  (labels ((find-window (frame-number)
-;; ;;        (find-if (lambda (x)
-;; ;;           (= frame-number (frame-number (window-frame x))))
-;; ;;             (screen-mapped-windows screen))))
-;; ;;    (let ((n1 (find-window (frame-number (screen-current-frame screen)))))
-;; ;;      (dbg n1))))
-
-;; (define-stumpwm-command "exchange" (screen)
-;;   (let ((n1 (frame-windows screen (screen-current-frame screen)))
-;;  (w1 (frame-window (screen-current-frame screen))))
-;;     (focus-frame-sibling screen)
-;;     (let ((n2 (frame-windows screen (screen-current-frame screen)))
-;;    (w2 (frame-window (screen-current-frame screen))))
-;;       (dolist (win n1)
-;;  (pull-window-by-number screen (window-number win)))
-;;       (frame-raise-window screen (screen-current-frame screen) w1)
-;;       (focus-frame-sibling screen)
-;;       (dolist (win n2)
-;;  (pull-window-by-number screen (window-number win)))
-;;       (frame-raise-window screen (screen-current-frame screen) w2))))
+(define-key *root-map* (kbd "c") '*chat-map*)
 
 ;;; work with emacsclient
 ;; see also "~/bin/e"
-(defvar *es-win* nil
-  "to hold the windo called emacsclient")
-(defun save-es-called-win ()
-  (setf *es-win* (current-window)))
+;; (defvar *es-win* nil
+;;   "to hold the windo called emacsclient")
+;; (defun save-es-called-win ()
+;;   (setf *es-win* (current-window)))
 
-(defun return-es-called-win (win)
-  (let* ((group (window-group win))
-         (frame (window-frame win))
-         (old-frame (tile-group-current-frame group)))
-    (frame-raise-window group frame win)
-    (focus-all win)
-    (unless (eq frame old-frame)
-      (show-frame-indicator group))))
+;; (defun return-es-called-win (win)
+;;   (let* ((group (window-group win))
+;;          (frame (window-frame win))
+;;          (old-frame (tile-group-current-frame group)))
+;;     (frame-raise-window group frame win)
+;;     (focus-all win)
+;;     (unless (eq frame old-frame)
+;;       (show-frame-indicator group))))
 
-;;; Scratchpad ------------------------------------------------------------------
-(defstruct scratchpad
-  (last-group '())
-  (group '()))
+;;; Allow windows to get raised even if they are in an inactive window group:
+;; (defun raise-urgent-window-hook (target)
+;;   (gselect (window-group target))
+;;   (really-raise-window target))
+;; (add-hook *urgent-window-hook* 'raise-urgent-window-hook)
 
-(defvar *scratchpads* '()
-  "All scratchpads indexed by screen.")
+;;; To be remove
 
-(defun current-scratchpad ()
-  (gethash (current-screen) *scratchpads*))
+;; fix with message
+(defcommand display-current-window-info () ()
+  "Shows the properties of the current window. These properties can be
+used for matching windows with run-or-raise or window placement
+rules."
+  (let ((w (current-window))
+        (*suppress-echo-timeout* t)
+        (nl (string #\NewLine)))
 
-(defun create-scratchpad-group (screen)
-  (let ((scratchpad-group (add-group screen ".scratchpad")))
-    (setf (group-number scratchpad-group) 0)
-    scratchpad-group))
+    ;; (message-no-timeout "class: ~a~%instance~a~%..." (window-class w) (window-res w) ...)
+    (echo-string (current-screen)
+                 (concat "class:    " (window-class w) nl
+                         "instance: " (window-res w) nl
+                         "type:     :" (string (window-type w)) nl
+                         "role:     " (window-role w) nl
+                         "title:    " (window-title w) nl
+                         "width:    " (format nil "~a" (window-width w)) nl
+                         "height    " (format nil "~a" (window-height w))))))
 
-(unless *scratchpads*
-  ;; Create a scratchpad for each screen
-  (setf *scratchpads* (make-hash-table :test #'eq))
-  (let ((start-screen (car *screen-list*)))
-    (loop for i in *screen-list*
-       do (progn (switch-to-screen i)
-                 (let ((scratchpad-group (create-scratchpad-group i)))
-                   ;;Store the scratchpad
-                   (setf (gethash (current-screen)
-                                  *scratchpads*)
-                         (make-scratchpad
-                          :group scratchpad-group)))))
-    (switch-to-screen start-screen)))
-
-(defcommand scratchpad () ()
-            (let ((scratchpad (current-scratchpad)))
-              (if scratchpad
-                  (cond
-                    ((scratchpad-last-group scratchpad)
-                     (switch-to-group (scratchpad-last-group scratchpad))
-                     (setf (scratchpad-last-group scratchpad) nil))
-                    ((eq (current-group) (scratchpad-group scratchpad))
-                     (message "scratchpad: I don't know where home is"))
-                    (t
-                     (setf (scratchpad-last-group scratchpad) (current-group))
-                     (switch-to-group (scratchpad-group scratchpad))
-                     (message "scratchpad")))
-                  (message "No scratchpad for this screen."))))
-
-
-(define-key *root-map* (kbd "SPC") "scratchpad")
-
-
-;;; file: menu.lisp
-(setf *menu-map*
-      (let ((m (make-sparse-keymap)))
-        (define-key m (kbd "C-p") 'menu-up)
-        (define-key m (kbd "Up") 'menu-up)
-        (define-key m (kbd "p") 'menu-up)
-
-        (define-key m (kbd "C-n") 'menu-down)
-        (define-key m (kbd "Down") 'menu-down)
-        (define-key m (kbd "n") 'menu-down)
-        (define-key m (kbd "C-g") 'menu-abort)
-        (define-key m (kbd "ESC") 'menu-abort)
-        (define-key m (kbd "RET") 'menu-finish)
-        (define-key m (kbd "C-j") 'menu-finish)
-        m))
-
-;;; file: user.lisp
-(defcommand eval-line (cmd) ((:rest "STUMPWM-USER> "))
-            (handler-case
-                (message "^20~{~a~^~%~}"
-                         (mapcar 'prin1-to-string
-                                 (multiple-value-list (eval (read-from-string cmd)))))
-              (error (c)
-                (err "^B^1*~A" c))))
-
-(defun run-or-raise (cmd props &optional (all-groups *run-or-raise-all-groups*) (all-screens *run-or-raise-all-screens*))
-  "Run the shell command, @var{cmd}, unless an existing window
-matches @var{props}. @var{props} is a property list with the following keys:
-
-@table @code
-@item :class
-Match the window's class.
-@item :instance
-Match the window's instance or resource-name.
-@item :role
-Match the window's @code{WM_WINDOW_ROLE}.
-@item :title
-Match the window's title.
-@end table
-
-By default, the global @var{*run-or-raise-all-groups*} decides whether
-to search all groups or the current one for a running
-instance. @var{all-groups} overrides this default. Similarily for
-@var{*run-or-raise-all-screens*} and @var{all-screens}."
-  (labels
-      ;; Raise the window win and select its frame.  For now, it
-      ;; does not select the screen.
-      ((goto-win (win)
-         (let* ((group (window-group win))
-                (frame (window-frame win))
-                (old-frame (tile-group-current-frame group)))
-           (frame-raise-window group frame win)
-           (focus-all win)
-           (unless (eq frame old-frame)
-             (show-frame-indicator group))))
-       (find-window (group)
-         (find-if (lambda (w)
-                    (apply 'window-matches-properties-p w props))
-                  (group-windows group))))
-    (let*
-        ((screens (if all-screens
-                      *screen-list*
-                      (list (current-screen))))
-         (win
-          ;; If no qualifiers are set don't bother looking for a match.
-          ;; search all groups
-          (if all-groups
-              (loop named outer
-                 for s in screens
-                 do (loop
-                       for g in (screen-groups s)
-                       for win = (find-window g)
-                       when win
-                       do (return-from outer win)))
-              (find-window (current-group)))))
-      (if win
-          (goto-win win)
-          (progn (run-shell-command cmd)
-                 (message "Now ~a is Loading!" cmd))))))
-
-;;; file: command.lisp
-(defcommand colon (&optional initial-input) (:rest)
-            "Read a command from the user. @var{initial-text} is optional. When
-supplied, the text will appear in the prompt."
-            (let ((cmd (completing-read (current-screen) "STUMPWM-USER: " (all-commands) (or initial-input ""))))
-              (unless cmd
-                (throw 'error :abort))
-              (when (plusp (length cmd))
-                (eval-command cmd t))))
-
-
-
-;;; -- core.lisp ---------------------------------------------------------
-
+(define-key *menu-map* (kbd "p") 'menu-up)
+(define-key *menu-map* (kbd "n") 'menu-down)
+;;-------------------------------------------------------------------------------------------------
+(defcommand display-normal-hints () ()
+  (format nil "~a" (xlib:wm-normal-hints (window-xwin (current-window)))))
 ;; Local Variables: **
 ;; mode:lisp **
 ;; outline-regexp: ";;; " **
